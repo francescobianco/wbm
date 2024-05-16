@@ -8,7 +8,7 @@ var rimraf = require("rimraf");
 let browser = null;
 let page = null;
 let counter = { fails: 0, success: 0 }
-const tmpPath = path.resolve(__dirname, '../tmp');
+const tmpPath = process.env.WBM_DATA_DIR || path.resolve(__dirname, '../tmp');
 
 const SELECTORS = {
     LOADING: "progress",
