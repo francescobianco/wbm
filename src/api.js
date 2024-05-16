@@ -192,6 +192,7 @@ async function sendByName(contactName, message) {
         const elementToClick2 = await page.$x(`//span[@title='${contactName}']`);
         //console.log(elementToClick2);
         await elementToClick2[0].click();
+        await page.waitFor(1000);
         await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 500000 });
         await page.waitFor(1000000);
         process.stdout.write(`${contactName} Sent\n`);
