@@ -188,13 +188,17 @@ async function sendByName(contactName, message) {
         await page.waitForSelector(SELECTORS.LOADING, { hidden: true, timeout: 60000 });
         //await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 5000 });
         //await page.keyboard.press("Enter");
-        await page.keyboard.type(contactName);
+        await page.keyboard.type(" "+contactName);
         const elementToClick2 = await page.$x(`//span[@title='${contactName}']`);
         //console.log(elementToClick2);
         await elementToClick2[0].click();
         await page.waitFor(1000);
-        await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 500000 });
-        await page.waitFor(1000000);
+        const elementToClick3 = await page.$x(`//span[@data-icon='send']`);
+        //console.log(elementToClick3);
+        await elementToClick3[0].click();
+        await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 5000 });
+        await page.keyboard.press("Enter");
+        await page.waitFor(1000)
         process.stdout.write(`${contactName} Sent\n`);
         counter.success++;
     } catch (err) {
