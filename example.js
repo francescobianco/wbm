@@ -1,8 +1,8 @@
 const wbm = require('./src/index');
 
 (async () => {
-    await wbm.start({showBrowser: false}).then(async () => {
-        const phones = ['393200466987'];
+    await wbm.start({showBrowser: true}).then(async () => {
+        const phones = ['WhatsApp Test'];
         const message = 'Good Morning.';
         await wbm.send(phones, message);
         await wbm.end();

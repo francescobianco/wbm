@@ -16,7 +16,8 @@ const SELECTORS = {
     QRCODE_PAGE: "body > div > div > div > .landing-wrapper",
     QRCODE_DATA: "div[data-ref]",
     QRCODE_DATA_ATTR: "data-ref",
-    SEND_BUTTON: 'div:nth-child(2) > button > span[data-icon="send"]'
+    SEND_BUTTON: 'div:nth-child(2) > button > span[data-icon="send"]',
+    SEARCH_BUTTON: 'div:nth-child(2) > button > span[data-icon="search"]',
 };
 
 /**
@@ -132,7 +133,7 @@ async function generateQRCode() {
 async function waitQRCode() {
     // if user scan QR Code it will be hidden
     try {
-        await page.waitForSelector(SELECTORS.QRCODE_PAGE, { timeout: 30000, hidden: true });
+        await page.waitForSelector(SELECTORS.QRCODE_PAGE, { timeout: 60000, hidden: true });
     } catch (err) {
         throw await QRCodeExeption("Dont't be late to scan the QR Code.");
     }
@@ -174,13 +175,45 @@ async function sendTo(phoneOrContact, message) {
 }
 
 /**
+ * @param {string} phone phone number: '5535988841854'
+ * @param {string} message Message to send to phone number
+ * Send message to a phone number
+ */
+async function sendByName(contactName, message) {
+    message = generateCustomMessage({name: contactName}, message);
+
+    try {
+        process.stdout.write("Sending message by name...\r");
+        await page.goto(`https://web.whatsapp.com/send?text=${encodeURIComponent(message)}`);
+        await page.waitForSelector(SELECTORS.LOADING, { hidden: true, timeout: 60000 });
+        //await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 5000 });
+        //await page.keyboard.press("Enter");
+        await page.keyboard.type(contactName);
+        const elementToClick2 = await page.$x(`//span[@title='${contactName}']`);
+        //console.log(elementToClick2);
+        await elementToClick2[0].click();
+        await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 500000 });
+        await page.waitFor(1000000);
+        process.stdout.write(`${contactName} Sent\n`);
+        counter.success++;
+    } catch (err) {
+        process.stdout.write(`${contactName} Failed\n`);
+        counter.fails++;
+    }
+}
+
+/**
  * @param {array} phones Array of phone numbers: ['5535988841854', ...]
  * @param {string} message Message to send to every phone number
  * Send same message to every phone number
  */
 async function send(phoneOrContacts, message) {
     for (let phoneOrContact of phoneOrContacts) {
-        await sendTo(phoneOrContact, message);
+        if (typeof phoneOrContact === "string" && !phoneOrContact.match(/^[0-9]+$/)) {
+            await sendByName(phoneOrContact, message);
+        } else {
+            await sendTo(phoneOrContact, message);
+        }
     }
 }
 
