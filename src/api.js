@@ -13,7 +13,7 @@ const tmpPath = path.resolve(__dirname, '../tmp');
 const SELECTORS = {
     LOADING: "progress",
     INSIDE_CHAT: "document.getElementsByClassName('two')[0]",
-    QRCODE_PAGE: "body > div > div > .landing-wrapper",
+    QRCODE_PAGE: "body > div > div > div > .landing-wrapper",
     QRCODE_DATA: "div[data-ref]",
     QRCODE_DATA_ATTR: "data-ref",
     SEND_BUTTON: 'div:nth-child(2) > button > span[data-icon="send"]'
@@ -45,7 +45,7 @@ async function start({ showBrowser = false, qrCodeData = false, session = true }
         page.setDefaultTimeout(60000);
 
         await page.goto("https://web.whatsapp.com");
-        if (session && await isAuthenticated()) {
+        if (session && await isAuthenticated(page)) {
             return;
         }
         else {
@@ -67,29 +67,31 @@ async function start({ showBrowser = false, qrCodeData = false, session = true }
 /**
  * Check if needs to scan qr code or already is is inside the chat
  */
-function isAuthenticated() {
+function isAuthenticated(page) {
     console.log('Authenticating...');
     return merge(needsToScan(page), isInsideChat(page))
         .pipe(take(1))
         .toPromise();
 }
 
-function needsToScan() {
+function needsToScan(page) {
+    console.log("needs to scan...");
     return from(
         page
             .waitForSelector(SELECTORS.QRCODE_PAGE, {
                 timeout: 0,
-            }).then(() => false)
+            }).then(() => { console.log("need to scan end"); return false; } )
     );
 }
 
-function isInsideChat() {
+function isInsideChat(page) {
+    console.log("is in chat...");
     return from(
         page
             .waitForFunction(SELECTORS.INSIDE_CHAT,
                 {
                     timeout: 0,
-                }).then(() => true)
+                }).then(() => { console.log("is in chat end"); return true; })
     );
 }
 
@@ -100,6 +102,7 @@ function deleteSession() {
  * return the data used to create the QR Code
  */
 async function getQRCodeData() {
+    console.log("Getting QRCode data...")
     await page.waitForSelector(SELECTORS.QRCODE_DATA, { timeout: 60000 });
     const qrcodeData = await page.evaluate((SELECTORS) => {
         let qrcodeDiv = document.querySelector(SELECTORS.QRCODE_DATA);
@@ -162,13 +165,9 @@ async function sendTo(phoneOrContact, message) {
         await page.waitForSelector(SELECTORS.SEND_BUTTON, { timeout: 5000 });
         await page.keyboard.press("Enter");
         await page.waitFor(1000);
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0);
         process.stdout.write(`${phone} Sent\n`);
         counter.success++;
     } catch (err) {
-        process.stdout.clearLine();
-        process.stdout.cursorTo(0);
         process.stdout.write(`${phone} Failed\n`);
         counter.fails++;
     }
